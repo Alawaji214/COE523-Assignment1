@@ -25,6 +25,7 @@ class Message:
             logging.error("Invalid content")
             raise ValueError
 
+        # Add ' ' padding until its length eqauls 8 bytes
         self.src = src.ljust(8)
         self.dest = dest.ljust(8)
         self.content = content
@@ -45,6 +46,7 @@ Return raw message
 Take raw message and return Message instance
     '''
     def deserialize(message):
+        # 8 + 8 + 1 = 17, src length + dest length + null termination
         if len(message) > 256 or len(message) < 17:
             logging.error("Invalid message")
             raise ValueError

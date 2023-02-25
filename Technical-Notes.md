@@ -25,4 +25,4 @@ Protobuf is an example of an appropriate message format for our example
 
 ## UDP vs TCP
 
-Pushing messages to clients may be cahnnlengin using UDP
+Pushing messages to clients may be challenging using UDP

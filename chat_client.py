@@ -1,6 +1,8 @@
 import socket
 import logging
+import time
 
+from message import Message
 
 '''
 @Quit
@@ -61,12 +63,29 @@ def main():
     # TODO: recive messages from otherclients (message)
 
 
-    client = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    client.sendto(str.encode(message),(HOST,TCP_PORT))
+    # client.sendto(str.encode(message),(HOST,TCP_PORT))
+    # client.bind((HOST,TCP_PORT))
+    client.connect((HOST,TCP_PORT))
 
+    src = "A"
+    dest = "-SERVER-"
+    connect = "Connect"
+    list = "List"
+    quit = "Quit"
+    # ser = "B".ljust(8) + src.ljust(8) + content + '\0'
+    cona_mes = Message("A",dest,connect)
+    conb_mes = Message("B",dest,connect)
+    conc_mes = Message("C",dest,connect)
+    list_mes = Message(src,dest,list)
+    quit_mes = Message(src,dest,quit)
+
+    client.send(cona_mes.serialize().encode())
+    client.send(conb_mes.serialize().encode())
+    client.send(conc_mes.serialize().encode())
+    # time.sleep(20)
     logging.warning("End Clinet")
-
 
 if __name__ == '__main__':
     main()

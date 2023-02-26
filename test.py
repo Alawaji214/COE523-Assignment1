@@ -1,6 +1,8 @@
 import unittest
 
 from message import Message
+import chat_server as cs
+import chat_client as cc
 
 class TestStringMethods(unittest.TestCase):
 
@@ -43,5 +45,25 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(mes.dest,mes2.dest)
         self.assertEqual(mes.content,mes2.content)
 
+    def test_connect(self):
+        cs.connect("A".ljust(8))
+        cs.connect("B".ljust(8))
+        connect = cs.list()
+        self.assertEqual(len(connect), 2)
+        cs.quit("A".ljust(8))
+        cs.quit("B".ljust(8))
+
+    def test_quit(self):
+        cs.connect("C".ljust(8))
+        cs.connect("D".ljust(8))
+        connect = cs.list()
+        self.assertEqual(len(connect), 2)
+        cs.quit("D".ljust(8))
+        connect = cs.list()
+        self.assertEqual(len(connect), 1) 
+        cs.quit("C".ljust(8))
+        connect = cs.list()
+        self.assertEqual(len(connect), 0) 
+                         
 if __name__ == '__main__':
     unittest.main()

@@ -1,55 +1,53 @@
 # import socket programming library
 import socket
-import socketserver
-import deprecation
-
-# import thread module
-from _thread import *
 import threading
 import logging
 
-'''
+# import custom class Message
+from message import Message
+# import thread module
+from _thread import *
+# import Queue data structure
+from queue import Queue
+
 HOST = "localhost"
 TCP_PORT = 9992 
-'''
+TIMEOUT_INTERVAL = 5
+MAX_CLIENT = 5
 
-@deprecation
-class TCPMessageHandler(socketserver.BaseRequestHandler):
-    def handle(self):
-        data = self.request[0].strip()
-        name = self.request[0].strip()
-        socket = self.request[1]
-        print(name,"wrote:".format(self.client_address[0]))
-        print(data)
-        socket.sendto(data.upper(), self.client_address)
+online_list = {}
+online_list_lock = threading.Lock()
 
-@deprecation
-def socketserver_main():
-    HOST = "localhost"
-    UDP_PORT = 9991 
-    TCP_PORT = 9992
-    
-    udp_server = socketserver.UDPServer((HOST, UDP_PORT), UDPMessageHandler)
-    tcp_server = socketserver.TCPServer((HOST, TCP_PORT), TCPMessageHandler)
-    udp_server.serve_forever()
-    tcp_server.serve_forever()
+class Client:
+    def __init__(self, id):
+        self.id = id
+        self.msg_db = Queue()
 
 '''
 Connect
 Syntax: Connect clientid
 Purpose: automatically sent by a client to the server when the client comes online
 '''
-def connect():
-	raise NotImplementedError
+def connect(client):
+	# lock online list
+	with online_list_lock:
+		logging.info("%s connected", client)
+		online_list[client] = Queue()
 
 '''
 Quit
 Syntax: Quit clientid
 Purpose: automatically sent by a client to the server when a user requests for session end
 '''
-def quit():
+def quit(client):
+	with online_list_lock:
+		logging.info("%s quit", client)
+		try:
+			online_list.pop(client)
+		except KeyError:
+			logging.warning("%s not found", client)
+
 	# TODO: send list to all connected clients
-	raise NotImplementedError
 
 '''
 List
@@ -57,7 +55,7 @@ Syntax: List
 Purpose: automatically sent by a client to the server when a user requests the list of online clients
 '''
 def list():
-    raise NotImplementedError
+    return online_list.keys()
 
 '''
 Alive
@@ -77,6 +75,15 @@ def general_message():
 	raise NotImplementedError
 
 
+def message_handler():
+
+	# alive
+	# connect
+	# list
+	# 
+
+	raise NotImplementedError
+
 '''
 chatserver:
 On startup, server will create a socket to receive client connections and messages. One client can
@@ -88,53 +95,58 @@ for a client, who is not online anymore, respond to the source client with a mes
 client is not online. The server will keep a list of online clients with it and clients can ask about
 this list by sending a message to the server. The server is also responsible for sending the latest
 client list to all the clients whenever there is a change in it.
+
+Client lifecycle
+TCPConnection --(connect)--> Connected --(quit)--> Offline
 '''
 # thread function
-def message_handler(c):
+def client_handler(c):
+	c.settimeout(TIMEOUT_INTERVAL)
+	client = c.getpeername()
 	while True:
-
+		
 		# data received from client
-		data = c.recv(1024)
-		if not data:
-			logging.warning('Bye')			
-			break
+		try:
+			data = c.recv(1024)
+			if not data:
+				logging.warning('Empty message')			
+				break
+			logging.info("%s sent %s", client, data)
 
-		# reverse the given string from client
-		data = data[::-1]
+		except socket.timeout:
+			logging.warning("%s timeout", client)
+			#quit
+			break; 
 
-		# send back reversed string to client
-		c.send(data)
-
+	logging.info("Bye %s", client)			
 	# connection closed
 	c.close()
 
 def socket_main():
+	logging.basicConfig(level='INFO')
 	logging.info("Started ChatServer")
 	
-	host = ""
-
-	# reserve a port on your computer
-	# in our case it is 12345 but it
-	# can be anything
-	port = 12345
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.bind((host, port))
-	logging.info("socket binded to port", port)
+	s.bind((HOST, TCP_PORT))
+	logging.info("socket binded to port %s", TCP_PORT)
 
 	# put the socket into listening mode
-	s.listen(5)
+	s.listen(MAX_CLIENT)
 	logging.info("socket is listening")
-
+	
 	# a forever loop until client wants to exit
 	while True:
 
 		# establish connection with client
-		c, addr = s.accept()
+		try:
+			c, addr = s.accept()
+			logging.info('Connected to : %s:%s', addr[0], addr[1])
+			# Start a new thread and return its identifier
+			start_new_thread(client_handler, (c,))
 
-		logging.info('Connected to :', addr[0], ':', addr[1])
+		except socket.error:
+			logging.error("Error in establishing connection")
 
-		# Start a new thread and return its identifier
-		start_new_thread(message_handler, (c,))
 	s.close()
 
 

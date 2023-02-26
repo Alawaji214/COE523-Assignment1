@@ -14,6 +14,7 @@ HOST = "localhost"
 TCP_PORT = 9992 
 TIMEOUT_INTERVAL = 5
 MAX_CLIENT = 5
+SERVER_ID = b'-SERVER-'
 
 online_list = {}
 online_list_lock = threading.Lock()
@@ -29,10 +30,11 @@ Syntax: Connect clientid
 Purpose: automatically sent by a client to the server when the client comes online
 '''
 def connect(client):
+	logging.info("%s wants to connect", client)
 	# lock online list
 	with online_list_lock:
-		logging.info("%s connected", client)
 		online_list[client] = Queue()
+		logging.info("%s connected", client)
 
 '''
 Quit
@@ -40,8 +42,8 @@ Syntax: Quit clientid
 Purpose: automatically sent by a client to the server when a user requests for session end
 '''
 def quit(client):
+	logging.info("%s quit", client)
 	with online_list_lock:
-		logging.info("%s quit", client)
 		try:
 			online_list.pop(client)
 		except KeyError:
@@ -62,7 +64,7 @@ Alive
 Syntax: Alive clientid
 Purpose: automatically sent by client to server after regular intervals that it is still alive
 '''
-def alive():
+def alive(client):
     raise NotImplementedError
 
 '''
@@ -71,18 +73,33 @@ Syntax: (otherclientid) message-statement
 Purpose: typed by the user at the client prompt when he want to send a message to an online
 client
 '''
-def general_message():
+def general_message(msg):
 	raise NotImplementedError
 
 
-def message_handler():
+def message_handler(data):
+	logging.info("message_handler")
+	msg = Message.deserialize(data)
+	logging.info("msg %s-%s-%s",msg.dest,msg.src,msg.content)
 
-	# alive
-	# connect
-	# list
-	# 
+	if msg.dest ==	SERVER_ID:
+		logging.info("content %s", msg.content)
+		match msg.content:
+			case b'Connect':
+				connect(msg.src)
+			case b'List':
+				list()
+			case b'Quit':
+				quit(msg.src)
+			case b'Alive':
+				alive(msg.src)
+			case _:
+				logging.warning("unidentified content %s", msg.content)
 
-	raise NotImplementedError
+	else:
+		general_message(msg)
+
+	# raise NotImplementedError
 
 '''
 chatserver:
@@ -104,7 +121,7 @@ def client_handler(c):
 	c.settimeout(TIMEOUT_INTERVAL)
 	client = c.getpeername()
 	while True:
-		
+		# TODO: client handler should be aware of the client
 		# data received from client
 		try:
 			data = c.recv(1024)
@@ -112,7 +129,7 @@ def client_handler(c):
 				logging.warning('Empty message')			
 				break
 			logging.info("%s sent %s", client, data)
-
+			message_handler(data)
 		except socket.timeout:
 			logging.warning("%s timeout", client)
 			#quit

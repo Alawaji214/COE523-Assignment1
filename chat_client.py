@@ -82,9 +82,14 @@ def main():
     quit_mes = Message(src,dest,quit)
 
     client.send(cona_mes.serialize().encode())
+    time.sleep(2)
     client.send(conb_mes.serialize().encode())
-    client.send(conc_mes.serialize().encode())
-    # time.sleep(20)
+    time.sleep(1)
+    client.send(list_mes.serialize().encode())
+
+    # client.send(conb_mes.serialize().encode())
+    # client.send(conc_mes.serialize().encode())
+    time.sleep(20)
     logging.warning("End Clinet")
 
 if __name__ == '__main__':

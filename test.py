@@ -1,42 +1,46 @@
 import unittest
 
-from message import Message
+from model_message import Message
 import chat_server as cs
 import chat_client as cc
-
+from model_client import Client
+from socket import socket
+from db import connectedClients
 class TestStringMethods(unittest.TestCase):
 
     def test_valid_message(self):
-        src = "A"
-        dest = "B"
+        src = Client("A", socket=None)
+        dest =  Client("B", socket=None)
         content = "Hi B, I am A"
-        ser = dest.ljust(8) + src.ljust(8) + content + '\0'
+        ser = dest.id.ljust(8) + src.id.ljust(8) + content + '\0'
 
         mes = Message(src,dest,content)
         self.assertEqual(Message.serialize(mes),ser)
         
     def test_invalid_dest(self):
-        src = "A"
-        dest = "C"
+        src = Client("A", socket=None)
+        dest = Client("C", socket=None)
         content = "Hi B, I am A"
-        ser = "B".ljust(8) + src.ljust(8) + content + '\0'
+        ser = "B".ljust(8) + src.id.ljust(8) + content + '\0'
 
         mes = Message(src,dest,content)
         self.assertNotEqual(Message.serialize(mes),ser)
 
     def test_large_content(self):
-        src = "A"
-        dest = "B"
+        src = Client("A", socket=None)
+        dest = Client("B", socket=None)
         content = "012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
 
         with self.assertRaises(ValueError):
             mes = Message(src,dest,content)
 
     def test_deserilize(self):
-        src = "A"
-        dest = "B"
+        src = Client("A", socket=None)
+        dest = Client("B", socket=None)
+        cs.connect(src)
+        cs.connect(dest)
         content = "Hi B, I am A"
-        ser = dest.ljust(8) + src.ljust(8) + content + '\0'
+        ser = dest.id.ljust(8) + src.id.ljust(8) + content + '\0'
 
         mes = Message(src,dest,content)
         mes2 = Message.deserialize(ser)
@@ -44,24 +48,30 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(mes.src,mes2.src)
         self.assertEqual(mes.dest,mes2.dest)
         self.assertEqual(mes.content,mes2.content)
+        cs.quit(src)
+        cs.quit(dest)
 
     def test_connect(self):
-        cs.connect("A".ljust(8))
-        cs.connect("B".ljust(8))
+        a: Client = Client("A", socket=None)
+        b: Client = Client("B", socket=None)
+        cs.connect(a)
+        cs.connect(b)
         connect = cs.list()
         self.assertEqual(len(connect), 2)
-        cs.quit("A".ljust(8))
-        cs.quit("B".ljust(8))
+        cs.quit(a)
+        cs.quit(b)
 
     def test_quit(self):
-        cs.connect("C".ljust(8))
-        cs.connect("D".ljust(8))
+        c: Client = Client("C", socket=None)
+        d: Client = Client("D", socket=None)
+        cs.connect(c)
+        cs.connect(d)
         connect = cs.list()
         self.assertEqual(len(connect), 2)
-        cs.quit("D".ljust(8))
+        cs.quit(d)
         connect = cs.list()
         self.assertEqual(len(connect), 1) 
-        cs.quit("C".ljust(8))
+        cs.quit(c)
         connect = cs.list()
         self.assertEqual(len(connect), 0) 
                          

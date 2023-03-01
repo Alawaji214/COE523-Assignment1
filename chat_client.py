@@ -2,7 +2,7 @@ import socket
 import logging
 import time
 
-from message import Message
+from model_message import Message
 
 '''
 @Quit

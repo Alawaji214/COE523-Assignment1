@@ -1,5 +1,4 @@
 from model_client import Client
-from typing import NamedTuple
 import time
 
 
@@ -8,6 +7,8 @@ connectedClients = {}
 
 
 def findClient(clientId: str) -> Client:
+    if clientId not in connectedClients.keys():
+        return Client(clientId, None)
     return connectedClients[clientId][0]
 
 
@@ -24,7 +25,7 @@ def listConnected():
 
 
 def isConnectedClient(client: Client):
-    if client.id in connectedClients.keys:
+    if client.id in connectedClients.keys():
         return True
     else:
         return False

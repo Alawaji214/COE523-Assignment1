@@ -41,9 +41,6 @@ Take raw message and return Message instance
         if len(message) > 256 or len(message) < 17:
             logging.error("Invalid message")
             raise ValueError
-        
-        # destination = Client(message[0:8])
-        # source      = Client(message[8:16])
         destination = findClient(message[0:8])
         source = findClient(message[8:16])
         content      = message[16:-1]

@@ -14,5 +14,4 @@ class Client:
         if not isinstance(other, Client):
             # don't attempt to compare against unrelated types
             return NotImplemented
-
         return self.id == other.id

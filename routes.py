@@ -1,7 +1,6 @@
 import logging
 from model_client import Client
 from model_message import Message
-import time
 import db
 
 '''
@@ -60,8 +59,7 @@ client
 
 
 def general_message(msg: Message, src: Client, dest: Client):
-    if db.isConnectedClient(dest.id):
-        # forward messag to dest
+    if db.isConnectedClient(dest.id) and dest.socket is not None:
         dest.socket.send(msg.content.encode())
     else:
         src.socket.send("dest not avaialbe".encode())

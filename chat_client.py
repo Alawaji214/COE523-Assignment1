@@ -26,7 +26,6 @@ class Client:
         self.id: str = id.ljust(8)
         self.socket = socket
         self.send_queue = Queue()
-        # self.listen_queue = Queue()
     
     '''
     Connect
@@ -36,9 +35,16 @@ class Client:
     def connect(self):
         logging.info("%s wants to connect", self.id)
         
-        resp = self.send_request_with_resp(Message(self.id,SERVER_ID,CONNECT))
-        # TODO: extract and set length of the regular intervals
-        self.timeout = int(Message.deserialize(resp).content)
+        resps = self.send_request_with_resp(Message(self.id,SERVER_ID,CONNECT)).split(b'\0')
+        
+        logging.info("timeout : %s", resps[0].decode())
+        self.timeout = int(Message.deserialize(resps.pop(0)).content)
+
+        # Handle the case where more than one message is queued
+        for resp in resps:
+            if not resp:
+                continue
+            print(Message.deserialize(resp).content)
 
         print(self.timeout)
         start_new_thread(self.alive, ())
@@ -51,7 +57,6 @@ class Client:
     Purpose: automatically sent by client to server after regular intervals that it is still alive
     '''
     def alive(self):
-
         while self.timeout:
             self.send_queue.put(Message(self.id,SERVER_ID,ALIVE))
             time.sleep(self.timeout)
@@ -63,9 +68,8 @@ class Client:
     '''
     def quit(self):
         logging.info("%s wants to quit", self.id)
-        self.send_queue.put(Message(id,SERVER_ID,QUIT))
+        self.send_queue.put(Message(self.id,SERVER_ID,QUIT))
         self.timeout = 0
-        # TODO: handle exit
 
     '''
     @List
@@ -74,8 +78,7 @@ class Client:
     '''
     def list(self):
         logging.info("%s wants list of connected clients", self.id)
-        self.send_queue.put(Message(id,SERVER_ID,QUIT))
-        raise NotImplementedError
+        self.send_queue.put(Message(self.id,SERVER_ID,LIST))
 
     '''
     General Message to some other client
@@ -99,8 +102,9 @@ class Client:
 
         while self.timeout:
             resp = self.socket.recv(256)
-            msg = Message.deserialize(resp)
-            print("new message from %s and says %s",msg.src,msg.content)
+            if resp:
+                msg = Message.deserialize(resp)
+                print("new message from %s and says %s",msg.src,msg.content)
                        
 
     def connection_handler(self):
@@ -110,28 +114,26 @@ class Client:
             msg = self.send_queue.get()
             logging.info("sending %s", msg.serialize()) 
             self.send_request(msg)
-
-    
+        
+        logging.info("Ending connection handler")
+        self.socket.close()    
 
     def interactive_handler(self):
         logging.info("%s  is in the interactive handler", self.id)
         print("You are now logged on")
-        # TODO: print list of connected users
 
-        while True:
-            # promt = input("Enter your command : ")
+        while self.timeout:
             promt = input(f"{bcolors.OKBLUE}Enter your command : {bcolors.ENDC}")
             if not promt:
                 continue
             
             cmd = promt.split(" ", 1)
             match cmd[0]:
-                case "quit":
+                case "@Quit":
                     self.quit()
-                case "list":
+                case "@List":
                     self.list()
-                # TODO: handle other cases
-                
+                # TODO: handle general message cases
 
 
 def select_clientID():
@@ -176,14 +178,6 @@ def main():
     except socket.error:
         sys.stdout.write("Failed to connect")
         logging.error("Failed to connect")
-
-# TODO: parallel
-    # TODO: auto send regular alive based on regular intervals
-    # TODO: listen to updated list
-    # TODO: input from user
-        # TODO: command handling (quit, list)
-        # TODO: send messages to otherclients (other client id, message)
-    # TODO: recive messages from otherclients (message)
 
     logging.warning("End Clinet")
 

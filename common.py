@@ -64,7 +64,7 @@ Take raw message and return Message instance
     def deserialize(message: str):
         # 8 + 8 + 1 = 17, src length + dest length + null termination
         if len(message) > 256 or len(message) < 17:
-            logging.error("Invalid message")
+            logging.error("Invalid message %s", message)
             raise ValueError
 
         destination = message[0:8]

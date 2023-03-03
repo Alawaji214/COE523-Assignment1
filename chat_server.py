@@ -12,7 +12,7 @@ from queue import Queue
 
 HOST = "localhost"
 TCP_PORT = 9992 
-TIMEOUT_INTERVAL = 10
+TIMEOUT_INTERVAL = 11
 MAX_CLIENT = 5
 SERVER_ID = "-SERVER-"
 TIMEOUT_BUFFER = 1
@@ -20,17 +20,14 @@ TIMEOUT_BUFFER = 1
 online_list = {}
 online_list_lock = threading.Lock()
 
-class Client:
-    def __init__(self, id):
-        self.id = id
-        self.msg_db = Queue()
+message_db = Queue()
 
 '''
 Connect
 Syntax: Connect clientid
 Purpose: automatically sent by a client to the server when the client comes online
 '''
-def connect(client):
+def connect(client, socket):
 	logging.info("%s wants to connect", client)
 	# lock online list
 	with online_list_lock:
@@ -38,8 +35,11 @@ def connect(client):
 			logging.info("%s is already connected", client)
 			raise ValueError
 		
-		online_list[client] = Queue()
+		online_list[client] = socket
 		logging.info("%s connected", client)
+		message_db.put(Message(SERVER_ID, client, str(TIMEOUT_INTERVAL).ljust(8)))
+
+	list_to_all()
 
 '''
 Quit
@@ -54,15 +54,31 @@ def quit(client):
 		except KeyError:
 			logging.warning("%s not found", client)
 
-	# TODO: send list to all connected clients
+	list_to_all()
 
 '''
 List
 Syntax: List
 Purpose: automatically sent by a client to the server when a user requests the list of online clients
 '''
-def list():
-    return online_list.keys()
+def list(client):
+    logging.info("%s list", client)
+    list_of_clients = "".join(online_list.keys())[:239]	
+    message_db.put(Message(SERVER_ID,client,list_of_clients)) 
+
+
+'''
+Send an updated list to all connected clients 
+'''
+def list_to_all():
+    logging.info("list_to_all")
+    
+    with online_list_lock:
+        connected_clients = online_list.keys()
+        list_of_clients = "".join(connected_clients)[:239]
+
+    for client in connected_clients:
+        message_db.put(Message(SERVER_ID,client,list_of_clients)) 
 
 '''
 Alive
@@ -94,7 +110,7 @@ def message_handler(data):
 		logging.info("content %s", msg.content)
 		match msg.content:
 			case b'List':
-				list()
+				list(msg.src)
 			case b'Quit':
 				quit(msg.src)
 			case b'Alive':
@@ -104,8 +120,6 @@ def message_handler(data):
 
 	else:
 		general_message(msg)
-
-	# raise NotImplementedError
 
 '''
 chatserver:
@@ -120,7 +134,7 @@ this list by sending a message to the server. The server is also responsible for
 client list to all the clients whenever there is a change in it.
 
 Client lifecycle
-TCPConnection --(connect)--> Connected --(quit)--> Offline
+connection_handler --> client_handler --> message_handler --> Action
 '''
 
 def connection_handler(connection):
@@ -133,13 +147,8 @@ def connection_handler(connection):
 		client_id = msg.src.decode()
 
 		if msg.content == b'Connect':
-			logging.info("%s wants to connect as (%s)", client_addr, client_id)
-			
-			connect(client_id)
-
-			# TODO: send length of regular interval
-			response = Message(SERVER_ID, client_id, str(TIMEOUT_INTERVAL))
-			connection.send(response.serialize().encode())
+			logging.info("%s wants to connect as (%s)", client_addr, client_id)			
+			connect(client_id, connection)
 
 			# start handling client 
 			client_handler(connection, msg.src)
@@ -149,7 +158,20 @@ def connection_handler(connection):
 	# connection closed
 	close_connection(connection)
 
-# thread function
+# clients sender thread function
+def clients_sender():
+	# TODO:
+	while True:
+		try:
+			msg = message_db.get()
+			dest = msg.dest
+			connection = online_list[dest]
+			connection.send(msg.serialize().encode())
+		except Exception as e:
+			logging.error("failed to send due to %s", error)
+
+
+# client listener thread function
 def client_handler(connection, client):
 	logging.info("client %s logged in", client)
 
@@ -158,12 +180,11 @@ def client_handler(connection, client):
 			data = connection.recv(256)
 			if not data:
 				logging.warning('Empty message')			
-				# break
+				break
 			logging.info("%s sent %s", client, data)
 			message_handler(data)
 		except socket.timeout:
 			logging.warning("%s timeout", client)
-			#quit
 			break; 
 	
 	# quit client
@@ -183,7 +204,10 @@ def socket_main():
 	# put the socket into listening mode
 	s.listen(MAX_CLIENT)
 	logging.info("socket is listening")
-	
+
+	# start a thread for sending messages for all clients 
+	start_new_thread(clients_sender, ())
+
 	# a forever loop until client wants to exit
 	while True:
 

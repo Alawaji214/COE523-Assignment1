@@ -33,8 +33,8 @@ between all the available clients so that they can talk to each other.
 
 - [X] Receiving Message from client (includes tokenization of message): 5
 - [ ] Forward/Reply Message to client (includes creation of message in specified format): 5
-- [ ] Creating Client List: 5
-- [ ] Sending Client List: 5
+- [X] Creating Client List: 5
+- [X] Sending Client List: 5
 - [X] Adding new Client to List: 5
 - [X] Deleting Client from List: 5
 - [ ] Retiring Client: 5
@@ -47,7 +47,7 @@ between all the available clients so that they can talk to each other.
 - [ ] Exchange Messages with another clients via server: 10
 - [ ] Receiving client list from server (includes tokenization of message): 10
 - [X] Sending Message to server (includes creation of message in specified format): 10
-- [ ] Displaying Client List: 5
+- [X] Displaying Client List: 5
 - [X] Sending alive message: 5
 - [X] Sending connect message: 5
 - [X] Sending quit message: 5

@@ -5,6 +5,8 @@
 
 logging sholud also be saved in a file
 
+## Python thread safe Queue data structure
+
 ## Async method calls
 
 ## socket vs socketserver library

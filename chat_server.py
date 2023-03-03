@@ -7,6 +7,7 @@ from model_message import Message
 # import thread module
 from _thread import *
 from routes import *
+import socket as socketModule
 from socket import socket
 
 HOST = "localhost"
@@ -72,12 +73,13 @@ def client_handler(c: socket):
 
 
 def prepareSocket() -> socket:
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s = socketModule.socket(socketModule.AF_INET, socketModule.SOCK_STREAM)
     s.bind((HOST, TCP_PORT))
     logging.info("socket binded to port %s", TCP_PORT)
     # put the socket into listening mode
     s.listen(MAX_CLIENT)
     logging.info("socket is listening")
+    return s
 
 
 def socket_main():
@@ -93,7 +95,7 @@ def socket_main():
             # Start a new thread and return its identifier
             # TODO use pool instead
             start_new_thread(client_handler, (c,))
-        except socket.error:
+        except socketModule.error:
             logging.error("Error in establishing connection")
     # NEVER REACHED
     s.close()

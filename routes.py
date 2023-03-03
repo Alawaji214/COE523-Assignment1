@@ -2,7 +2,7 @@ import logging
 from model_client import Client
 from model_message import Message
 import db
-
+import pickle
 '''
 Connect
 Syntax: Connect clientid
@@ -14,6 +14,7 @@ def connect(client: Client):
     logging.info("%s wants to connect", client)
     db.pushClient(client=client)
     logging.info("%s connected", client)
+    sendLatestList()
 
 
 '''
@@ -26,6 +27,7 @@ Purpose: automatically sent by a client to the server when a user requests for s
 def quit(client: Client):
     logging.info("%s quit", client)
     db.popClient(client=client)
+    sendLatestList()
 
 
 '''
@@ -62,4 +64,12 @@ def general_message(msg: Message, src: Client, dest: Client):
     if db.isConnectedClient(dest.id) and dest.socket is not None:
         dest.socket.send(msg.content.encode())
     else:
-        src.socket.send("dest not avaialbe".encode())
+        src.socket.send("client is not online".encode())
+
+
+def sendLatestList():
+    connected = db.listConnected()
+    for client in db.connectedClientsList():
+        c = Client(client.id, client.socket)
+        c.socket.send(pickle.dumps(connected))
+        # recd = pickle.loads(msg)

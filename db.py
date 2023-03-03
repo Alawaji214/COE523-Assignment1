@@ -1,6 +1,6 @@
 from model_client import Client
 import time
-
+# from typing import List
 
 connectedClients = {}
 # TODO hanlde locking
@@ -29,3 +29,6 @@ def isConnectedClient(client: Client):
         return True
     else:
         return False
+
+def connectedClientsList():
+    return connectedClients.values()[0]

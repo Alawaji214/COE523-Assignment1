@@ -70,6 +70,6 @@ def general_message(msg: Message, src: Client, dest: Client):
 def sendLatestList():
     connected = db.listConnected()
     for client in db.connectedClientsList():
-        c = Client(client.id, client.socket)
+        c = Client(client[0].id, client[0].socket)
         c.socket.send(pickle.dumps(connected))
         # recd = pickle.loads(msg)

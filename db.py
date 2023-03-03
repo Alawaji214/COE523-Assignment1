@@ -31,4 +31,4 @@ def isConnectedClient(client: Client):
         return False
 
 def connectedClientsList():
-    return connectedClients.values()[0]
+    return connectedClients.values()

@@ -2,13 +2,12 @@
 import socket
 import threading
 import logging
-
 # import custom class Message
 from model_message import Message
 # import thread module
 from _thread import *
-# import Queue data structure
 from routes import *
+from socket import socket
 
 HOST = "localhost"
 TCP_PORT = 9992
@@ -20,7 +19,7 @@ SERVER_ID = b'-SERVER-'
 def message_handler(data):
     logging.info("message_handler")
     msg = Message.deserialize(data)
-    logging.info("msg %s-%s-%s", msg.dest, msg.src, msg.content)
+    logging.info("msg %s-%s-%s", msg.dest.id, msg.src.id, msg.content)
 
     if msg.dest == SERVER_ID:
         logging.info("content %s", msg.content)
@@ -38,8 +37,6 @@ def message_handler(data):
 
     else:
         general_message(msg)
-
-    # raise NotImplementedError
 
 
 '''
@@ -60,55 +57,45 @@ TCPConnection --(connect)--> Connected --(quit)--> Offline
 # thread function
 
 
-def client_handler(c):
-    # c.settimeout(TIMEOUT_INTERVAL)
-    client = c.getpeername()
+def client_handler(c: socket):
+    getpeername = c.getpeername()
     while True:
-        # TODO: client handler should be aware of the client
-        # data received from client
-        # try:
-        data = c.recv(256)
-        if not data:
+        payload = c.recv(256)
+        # TODO if payload has Quit, Or No need for below
+        if not payload:
             logging.warning('Empty message')
             break
-        logging.info("%s sent %s", client, data)
-        message_handler(data)
-        # except socket.timeout:
-        # 	logging.warning("%s timeout", client)
-        # 	#quit
-        # 	break;
-
-    logging.info("Bye %s", client)
-    # connection closed
+        logging.info("getpeername %s payload %s", getpeername, payload)
+        message_handler(payload)
+    logging.info("Bye %s", getpeername)
     c.close()
+
+
+def prepareSocket() -> socket:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((HOST, TCP_PORT))
+    logging.info("socket binded to port %s", TCP_PORT)
+    # put the socket into listening mode
+    s.listen(MAX_CLIENT)
+    logging.info("socket is listening")
 
 
 def socket_main():
     logging.basicConfig(level='INFO')
     logging.info("Started ChatServer")
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((HOST, TCP_PORT))
-    logging.info("socket binded to port %s", TCP_PORT)
-
-    # put the socket into listening mode
-    s.listen(MAX_CLIENT)
-    logging.info("socket is listening")
-
+    s = prepareSocket()
     # a forever loop until client wants to exit
     while True:
-
         # establish connection with client
         try:
             c, addr = s.accept()
             logging.info('Connected to : %s:%s', addr[0], addr[1])
             # Start a new thread and return its identifier
-            # use pool instead
+            # TODO use pool instead
             start_new_thread(client_handler, (c,))
-
         except socket.error:
             logging.error("Error in establishing connection")
-
+    # NEVER REACHED
     s.close()
 
 

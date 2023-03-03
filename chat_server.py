@@ -17,9 +17,11 @@ MAX_CLIENT = 5
 SERVER_ID = b'-SERVER-'
 
 
-def message_handler(data):
+def message_handler(data, srcSocket: socket):
     logging.info("message_handler")
     msg = Message.deserialize(data)
+    msg.src.socket = srcSocket
+    
     logging.info("msg %s-%s-%s", msg.dest.id, msg.src.id, msg.content)
 
     if msg.dest == SERVER_ID:
@@ -67,7 +69,7 @@ def client_handler(c: socket):
             logging.warning('Empty message')
             break
         logging.info("getpeername %s payload %s", getpeername, payload)
-        message_handler(payload)
+        message_handler(payload, c)
     logging.info("Bye %s", getpeername)
     c.close()
 

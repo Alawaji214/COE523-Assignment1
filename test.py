@@ -1,6 +1,6 @@
 import unittest
 
-from message import Message
+from common import Message
 import chat_server as cs
 import chat_client as cc
 

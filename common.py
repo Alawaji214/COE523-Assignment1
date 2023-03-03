@@ -1,4 +1,20 @@
 import logging
+# import str
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+def isValidClientID(client_id: str):
+    return len(client_id) <= 8
 
 '''
 A message sent by a process (client/server) to another. It is a null terminated string with the
@@ -13,15 +29,15 @@ iterations.
 '''
 class Message:
     def __init__(self, src, dest, content):
-        if len(src) > 8:
+        if not isValidClientID(src):
             logging.error("Invalid source")
             raise ValueError
 
-        if len(dest) > 8:
+        if not isValidClientID(dest):
             logging.error("Invalid destination")
             raise ValueError
 
-        if len(content) > 239:
+        if not len(content) <= 239:
             logging.error("Invalid content")
             raise ValueError
 
@@ -45,7 +61,7 @@ Return raw message
     '''
 Take raw message and return Message instance
     '''
-    def deserialize(message):
+    def deserialize(message: str):
         # 8 + 8 + 1 = 17, src length + dest length + null termination
         if len(message) > 256 or len(message) < 17:
             logging.error("Invalid message")

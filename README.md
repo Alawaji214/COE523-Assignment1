@@ -31,23 +31,23 @@ between all the available clients so that they can talk to each other.
 
 #### Server
 
-- [ ] Receiving Message from client (includes tokenization of message): 5
+- [X] Receiving Message from client (includes tokenization of message): 5
 - [ ] Forward/Reply Message to client (includes creation of message in specified format): 5
 - [ ] Creating Client List: 5
 - [ ] Sending Client List: 5
-- [ ] Adding new Client to List: 5
-- [ ] Deleting Client from List: 5
+- [X] Adding new Client to List: 5
+- [X] Deleting Client from List: 5
 - [ ] Retiring Client: 5
 - [ ] Informing about change in List: 5
 - [ ] Reply Message if message for offline Client: 5
-- [ ] Resetting Client life on receiving alive message: 5
+- [X] Resetting Client life on receiving alive message: 5
 
 #### Client
 
 - [ ] Exchange Messages with another clients via server: 10
 - [ ] Receiving client list from server (includes tokenization of message): 10
-- [ ] Sending Message to server (includes creation of message in specified format): 10
+- [X] Sending Message to server (includes creation of message in specified format): 10
 - [ ] Displaying Client List: 5
-- [ ] Sending alive message: 5
-- [ ] Sending connect message: 5
-- [ ] Sending quit message: 5
+- [X] Sending alive message: 5
+- [X] Sending connect message: 5
+- [X] Sending quit message: 5

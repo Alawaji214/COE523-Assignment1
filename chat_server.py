@@ -4,7 +4,7 @@ import threading
 import logging
 
 # import custom class Message
-from message import Message
+from common import Message
 # import thread module
 from _thread import *
 # import Queue data structure
@@ -12,9 +12,10 @@ from queue import Queue
 
 HOST = "localhost"
 TCP_PORT = 9992 
-TIMEOUT_INTERVAL = 5
+TIMEOUT_INTERVAL = 10
 MAX_CLIENT = 5
-SERVER_ID = b'-SERVER-'
+SERVER_ID = "-SERVER-"
+TIMEOUT_BUFFER = 1
 
 online_list = {}
 online_list_lock = threading.Lock()
@@ -33,6 +34,10 @@ def connect(client):
 	logging.info("%s wants to connect", client)
 	# lock online list
 	with online_list_lock:
+		if client in online_list:
+			logging.info("%s is already connected", client)
+			raise ValueError
+		
 		online_list[client] = Queue()
 		logging.info("%s connected", client)
 
@@ -65,7 +70,9 @@ Syntax: Alive clientid
 Purpose: automatically sent by client to server after regular intervals that it is still alive
 '''
 def alive(client):
-    raise NotImplementedError
+  	logging.info("%s alive", client)
+	# the connection will not be closed if it is active
+	# the timeout is in watch by connection.settimeout(TIMEOUT_INTERVAL + TIMEOUT_BUFFER) from connection_handler
 
 '''
 General Message to some other client
@@ -74,6 +81,7 @@ Purpose: typed by the user at the client prompt when he want to send a message t
 client
 '''
 def general_message(msg):
+	logging.info("general_message")
 	raise NotImplementedError
 
 
@@ -82,11 +90,9 @@ def message_handler(data):
 	msg = Message.deserialize(data)
 	logging.info("msg %s-%s-%s",msg.dest,msg.src,msg.content)
 
-	if msg.dest ==	SERVER_ID:
+	if msg.dest.decode() ==	SERVER_ID:
 		logging.info("content %s", msg.content)
 		match msg.content:
-			case b'Connect':
-				connect(msg.src)
 			case b'List':
 				list()
 			case b'Quit':
@@ -116,31 +122,58 @@ client list to all the clients whenever there is a change in it.
 Client lifecycle
 TCPConnection --(connect)--> Connected --(quit)--> Offline
 '''
+
+def connection_handler(connection):
+	connection.settimeout(TIMEOUT_INTERVAL + TIMEOUT_BUFFER)
+	client_addr = connection.getpeername()
+
+	data = connection.recv(256)
+	if data:
+		msg = Message.deserialize(data)
+		client_id = msg.src.decode()
+
+		if msg.content == b'Connect':
+			logging.info("%s wants to connect as (%s)", client_addr, client_id)
+			
+			connect(client_id)
+
+			# TODO: send length of regular interval
+			response = Message(SERVER_ID, client_id, str(TIMEOUT_INTERVAL))
+			connection.send(response.serialize().encode())
+
+			# start handling client 
+			client_handler(connection, msg.src)
+		else:
+			logging.info("%s sent invalid request (%s)", client_addr, msg.content)
+
+	# connection closed
+	close_connection(connection)
+
 # thread function
-def client_handler(c):
-	c.settimeout(TIMEOUT_INTERVAL)
-	client = c.getpeername()
+def client_handler(connection, client):
+	logging.info("client %s logged in", client)
+
 	while True:
-		# TODO: client handler should be aware of the client
-		# data received from client
 		try:
-			data = c.recv(1024)
+			data = connection.recv(256)
 			if not data:
 				logging.warning('Empty message')			
-				break
+				# break
 			logging.info("%s sent %s", client, data)
 			message_handler(data)
 		except socket.timeout:
 			logging.warning("%s timeout", client)
 			#quit
 			break; 
+	
+	# quit client
+	quit(client)
 
-	logging.info("Bye %s", client)			
-	# connection closed
-	c.close()
+def close_connection(connection):
+	logging.info("closing %s", connection.getpeername())
+	connection.close()
 
 def socket_main():
-	logging.basicConfig(level='INFO')
 	logging.info("Started ChatServer")
 	
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -159,13 +192,16 @@ def socket_main():
 			c, addr = s.accept()
 			logging.info('Connected to : %s:%s', addr[0], addr[1])
 			# Start a new thread and return its identifier
-			start_new_thread(client_handler, (c,))
+			start_new_thread(connection_handler, (c,))
 
 		except socket.error:
 			logging.error("Error in establishing connection")
+			break
 
 	s.close()
+	logging.info("ChatServer End")
 
 
 if __name__ == '__main__':
+	logging.basicConfig(level='INFO')
 	socket_main()

@@ -96,7 +96,8 @@ class Client:
     def send_message(self, args):
 
         if len(args) < 2:
-            raise ValueError
+            logging.warning("message format should as follows:'TARGET CONTENT'")
+            return
 
         other_client = args[0]
         content = args[1]

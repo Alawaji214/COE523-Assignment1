@@ -86,7 +86,8 @@ def list_to_all():
 
     with online_list_lock:
         connected_clients = online_list.keys()
-        list_of_clients = "".join(connected_clients)[:239]
+        list_of_clients = "List of connected clients: " + \
+            "".join(connected_clients)[:239]
 
     for client in connected_clients:
         message_db.put(Message(SERVER_ID, client, list_of_clients))
@@ -120,7 +121,8 @@ def general_message(msg):
         message_db.put(
             Message(msg.src.decode(), msg.dest.decode(), msg.content.decode()))
     else:
-        message_db.put(Message(SERVER_ID, msg.src.decode(), "that the target client is not online"))
+        message_db.put(Message(SERVER_ID, msg.src.decode(),
+                       "the target client is not online"))
 
 
 def message_handler(data):

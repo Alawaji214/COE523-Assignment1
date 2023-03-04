@@ -10,6 +10,7 @@ logging sholud also be saved in a file
 ## Async method calls
 
 ## socket vs socketserver library
+The socketserver module simplifies the task of writing network servers. However, we sticked with socket is it utlilize in the class and give more freedom of implamentation.
 
 ## Data Serilization
 
@@ -27,4 +28,6 @@ Protobuf is an example of an appropriate message format for our example
 
 ## UDP vs TCP
 
-Pushing messages to clients may be challenging using UDP
+Pushing messages to clients may be challenging using UDP since it is connectionless, server pushing messages to client would not feasiable.
+
+For that TCP is more appropriate for full-duplex communication.

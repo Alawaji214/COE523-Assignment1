@@ -118,11 +118,16 @@ Purpose: automatically sent by client to server after regular intervals that it 
 def checkAlive():
     now = datetime.now()
     with online_list_lock:
+        before = len(online_list)
         for clientId, client in dict(online_list).items():
             delta = now - client[1]
             if delta.seconds > TIMEOUT_INTERVAL:
                 logging.info("checkAlive - online_list.pop(clientId) %s", clientId)
                 online_list.pop(clientId)
+        after = len(online_list)
+    if after != before:
+        logging.info('broadcast list to all')
+        list_to_all()
     logging.info("updating alive list")
     time.sleep(TIMEOUT_INTERVAL * 1.5)
     checkAlive()

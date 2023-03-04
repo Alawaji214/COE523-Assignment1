@@ -19,7 +19,7 @@ ALIVE = "Alive"
 
 
 class Client:
-    def __init__(self, id: str, socket: socket):
+    def __init__(self, id: str, socket: socket.socket):
         if len(id) > 8:
             logging.error("Invalid id of client, {id}", id)
             raise ValueError
@@ -196,7 +196,7 @@ def main():
         clientID = select_clientID()
 
         client = Client(clientID, client)
-        client.connect()
+        client.connect()#CONNECT COMMAND SENT
         client.interactive_handler()
 
     except socket.error:

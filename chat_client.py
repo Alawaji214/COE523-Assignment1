@@ -63,7 +63,7 @@ class Client:
     def alive(self):
         while self.timeout:
             self.send_queue.put(Message(self.id, SERVER_ID, ALIVE))
-            time.sleep(self.timeout)
+            time.sleep(self.timeout / 2)
 
     '''
     @Quit

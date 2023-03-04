@@ -71,7 +71,7 @@ Purpose: automatically sent by a client to the server when a user requests the l
 '''
 
 
-def list(client):
+def listRoute(client):
     logging.info("%s list", client)
     list_of_clients = "".join(online_list.keys())[:239]
     message_db.put(Message(SERVER_ID, client, list_of_clients))
@@ -102,11 +102,13 @@ Purpose: automatically sent by client to server after regular intervals that it 
 
 
 def alive(client):
-    logging.info("%s alive", client)
-    # the connection will not be closed if it is active
-    # the timeout is in watch by connection.settimeout(TIMEOUT_INTERVAL + TIMEOUT_BUFFER) from connection_handler
-
-
+    logging.info("%s wants to be alive", client)
+    # lock online list
+    with online_list_lock:
+        listClient = list(online_list[client])
+        listClient[1] = datetime.now()
+        online_list[client] = tuple(listClient)
+        logging.info("%s updated alive time", client)
 '''
 checkAlive
 Syntax: Alive clientid
@@ -116,13 +118,13 @@ Purpose: automatically sent by client to server after regular intervals that it 
 def checkAlive():
     now = datetime.now()
     with online_list_lock:
-        for clientId, client in online_list.items():
+        for clientId, client in dict(online_list).items():
             delta = now - client[1]
             if delta.seconds > TIMEOUT_INTERVAL:
                 logging.info("checkAlive - online_list.pop(clientId) %s", clientId)
                 online_list.pop(clientId)
     logging.info("updating alive list")
-    time.sleep(TIMEOUT_INTERVAL)
+    time.sleep(TIMEOUT_INTERVAL * 1.5)
     checkAlive()
 
 '''
@@ -157,7 +159,7 @@ def message_handler(data):
         logging.info("content %s", msg.content)
         match content:
             case "List":
-                list(src)
+                listRoute(src)
             case "Quit":
                 quit(src)
             case "Alive":

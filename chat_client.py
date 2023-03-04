@@ -120,10 +120,10 @@ class Client:
 
                 match msg.src:
                     case b'-SERVER-':
-                        print("new message from %s, connected clients are %s" %
+                        print("new message from %s: %s" %
                               (msg.src.decode(), msg.content.decode()))
                     case _:
-                        print("new message from %s and says %s" %
+                        print("new message from %s: %s" %
                               (msg.src.decode(), msg.content.decode()))
 
     def connection_handler(self):

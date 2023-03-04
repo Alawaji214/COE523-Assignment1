@@ -120,7 +120,7 @@ def general_message(msg):
         message_db.put(
             Message(msg.src.decode(), msg.dest.decode(), msg.content.decode()))
     else:
-        message_db.put(Message(SERVER_ID, msg.src, msg.content))
+        message_db.put(Message(SERVER_ID, msg.src.decode(), "that the target client is not online"))
 
 
 def message_handler(data):

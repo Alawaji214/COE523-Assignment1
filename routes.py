@@ -60,11 +60,11 @@ client
 '''
 
 
-def general_message(msg: Message, src: Client, dest: Client):
-    if db.isConnectedClient(dest.id) and dest.socket is not None:
-        dest.socket.send(msg.content.encode())
+def general_message(msg: Message):
+    if db.isConnectedClient(msg.dest) and msg.dest.socket is not None:
+        msg.dest.socket.send(msg.content.encode())
     else:
-        src.socket.send("client is not online".encode())
+        msg.src.socket.send("client is not online".encode())
 
 
 def sendLatestList():

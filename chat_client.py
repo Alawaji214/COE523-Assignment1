@@ -3,6 +3,7 @@ import logging
 import time
 
 from model_message import Message
+from model_client import Client
 
 '''
 @Quit
@@ -75,11 +76,11 @@ def main():
     list = "List"
     quit = "Quit"
     # ser = "B".ljust(8) + src.ljust(8) + content + '\0'
-    cona_mes = Message("A",dest,connect)
-    conb_mes = Message("B",dest,connect)
-    conc_mes = Message("C",dest,connect)
-    list_mes = Message(src,dest,list)
-    quit_mes = Message(src,dest,quit)
+    cona_mes = Message(Client("A", None),Client(dest, None),connect)
+    conb_mes = Message(Client("B", None),Client(dest, None),connect)
+    conc_mes = Message(Client("C", None),Client(dest, None),connect)
+    list_mes = Message(Client(src, None),Client(dest, None),list)
+    quit_mes = Message(Client(src, None),Client(dest, None),quit)
 
     client.send(cona_mes.serialize().encode())
     time.sleep(2)

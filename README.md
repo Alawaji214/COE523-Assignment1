@@ -37,15 +37,15 @@ between all the available clients so that they can talk to each other.
 - [X] Sending Client List: 5
 - [X] Adding new Client to List: 5
 - [X] Deleting Client from List: 5
-- [ ] Retiring Client: 5
-- [ ] Informing about change in List: 5
+- [X] Retiring Client: 5
+- [X] Informing about change in List: 5
 - [ ] Reply Message if message for offline Client: 5
 - [X] Resetting Client life on receiving alive message: 5
 
 #### Client
 
 - [ ] Exchange Messages with another clients via server: 10
-- [ ] Receiving client list from server (includes tokenization of message): 10
+- [X] Receiving client list from server (includes tokenization of message): 10
 - [X] Sending Message to server (includes creation of message in specified format): 10
 - [X] Displaying Client List: 5
 - [X] Sending alive message: 5

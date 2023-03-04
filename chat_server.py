@@ -106,15 +106,19 @@ def message_handler(data):
 	msg = Message.deserialize(data)
 	logging.info("msg %s-%s-%s",msg.dest,msg.src,msg.content)
 
+	src = msg.src.decode()
+	dest = msg.dest.decode()
+	content = msg.content.decode()
+
 	if msg.dest.decode() ==	SERVER_ID:
 		logging.info("content %s", msg.content)
 		match msg.content:
 			case b'List':
-				list(msg.src)
+				list(src)
 			case b'Quit':
-				quit(msg.src)
+				quit(src)
 			case b'Alive':
-				alive(msg.src)
+				alive(src)
 			case _:
 				logging.warning("unidentified content %s", msg.content)
 
@@ -185,10 +189,8 @@ def client_handler(connection, client):
 			message_handler(data)
 		except socket.timeout:
 			logging.warning("%s timeout", client)
-			break; 
-	
-	# quit client
-	quit(client)
+			quit(client)
+			break; 	
 
 def close_connection(connection):
 	logging.info("closing %s", connection.getpeername())

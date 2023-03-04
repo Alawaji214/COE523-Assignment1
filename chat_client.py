@@ -68,7 +68,7 @@ class Client:
     '''
     def quit(self):
         logging.info("%s wants to quit", self.id)
-        self.send_queue.put(Message(self.id,SERVER_ID,QUIT))
+        self.send_request(Message(self.id,SERVER_ID,QUIT))
         self.timeout = 0
 
     '''
@@ -104,8 +104,12 @@ class Client:
             resp = self.socket.recv(256)
             if resp:
                 msg = Message.deserialize(resp)
-                print("new message from %s and says %s",msg.src,msg.content)
-                       
+                
+                match msg.src:
+                    case b'-SERVER-':
+                        print("new message from %s, connected clients are %s",msg.src.decode(), msg.content.decode())
+                    case other:
+                        print("new message from %s and says %s",msg.src.decode(), msg.content.decode())
 
     def connection_handler(self):
         logging.info("started connection handler")
@@ -176,7 +180,7 @@ def main():
         client.interactive_handler()
 
     except socket.error:
-        sys.stdout.write("Failed to connect")
+        print("Failed to connect")
         logging.error("Failed to connect")
 
     logging.warning("End Clinet")

@@ -2,7 +2,8 @@
 import socket
 import threading
 import logging
-
+import time
+from datetime import datetime
 # import custom class Message
 from common import Message
 # import thread module
@@ -37,7 +38,7 @@ def connect(client, socket):
             logging.info("%s is already connected", client)
             raise ValueError
 
-        online_list[client] = socket
+        online_list[client] = (socket, datetime.now())
         logging.info("%s connected", client)
         message_db.put(Message(SERVER_ID, client,
                        str(TIMEOUT_INTERVAL).ljust(8)))
@@ -105,6 +106,24 @@ def alive(client):
     # the connection will not be closed if it is active
     # the timeout is in watch by connection.settimeout(TIMEOUT_INTERVAL + TIMEOUT_BUFFER) from connection_handler
 
+
+'''
+checkAlive
+Syntax: Alive clientid
+Purpose: automatically sent by client to server after regular intervals that it is still alive
+'''
+
+def checkAlive():
+    now = datetime.now()
+    with online_list_lock:
+        for clientId, client in online_list.items():
+            delta = now - client[1]
+            if delta.seconds > TIMEOUT_INTERVAL:
+                logging.info("checkAlive - online_list.pop(clientId) %s", clientId)
+                online_list.pop(clientId)
+    logging.info("updating alive list")
+    time.sleep(TIMEOUT_INTERVAL)
+    checkAlive()
 
 '''
 General Message to some other client
@@ -198,7 +217,7 @@ def clients_sender():
         try:
             msg = message_db.get()
             dest = msg.dest
-            connection = online_list[dest]
+            connection = online_list[dest][0]
             connection.send(msg.serialize().encode())
         except Exception as e:
             logging.error("failed to send due to %s", error)
@@ -229,6 +248,9 @@ def close_connection(connection):
 
 def socket_main():
     logging.info("Started ChatServer")
+
+    # to check alive list
+    start_new_thread(checkAlive, ())
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST, TCP_PORT))

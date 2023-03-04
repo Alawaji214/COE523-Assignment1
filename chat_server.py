@@ -97,7 +97,7 @@ def list_to_all():
 '''
 Alive
 Syntax: Alive clientid
-Purpose: automatically sent by client to server after regular intervals that it is still alive
+Purpose: automatically sent by client to server after regular intervals that it is still alive, update latest time alive siganl recieved
 '''
 
 
@@ -111,8 +111,8 @@ def alive(client):
         logging.info("%s updated alive time", client)
 '''
 checkAlive
-Syntax: Alive clientid
-Purpose: automatically sent by client to server after regular intervals that it is still alive
+Syntax: checkAlive 
+Purpose: a job check every TIMEOUT_INTERVAL * 1.5 seconds for last time a client updated his alive status
 '''
 
 def checkAlive():

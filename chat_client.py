@@ -57,7 +57,7 @@ class Client:
     '''
     Alive
     Syntax: Alive clientid
-    Purpose: automatically sent by client to server after regular intervals that it is still alive
+    Purpose: automatically sent by client to server after regular intervals that it is still alive, interval is half time sent by server to avoid server deleteing before recieiving alive siganl
     '''
 
     def alive(self):

@@ -98,13 +98,18 @@ client
 '''
 def general_message(msg):
 	logging.info("general_message")
-	raise NotImplementedError
+	
+
+	if msg.dest.decode() in online_list:
+		message_db.put(Message(msg.src.decode(), msg.dest.decode(), msg.content.decode()))
+	else:
+		message_db.put(Message(SERVER_ID, msg.src, msg.content))
 
 
 def message_handler(data):
 	logging.info("message_handler")
 	msg = Message.deserialize(data)
-	logging.info("msg %s-%s-%s",msg.dest,msg.src,msg.content)
+	logging.info("msg %s-%s-%s", msg.dest, msg.src, msg.content)
 
 	src = msg.src.decode()
 	dest = msg.dest.decode()
@@ -112,12 +117,12 @@ def message_handler(data):
 
 	if msg.dest.decode() ==	SERVER_ID:
 		logging.info("content %s", msg.content)
-		match msg.content:
-			case b'List':
+		match content:
+			case "List":
 				list(src)
-			case b'Quit':
+			case "Quit":
 				quit(src)
-			case b'Alive':
+			case "Alive":
 				alive(src)
 			case _:
 				logging.warning("unidentified content %s", msg.content)

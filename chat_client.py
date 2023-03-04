@@ -86,8 +86,14 @@ class Client:
     Purpose: typed by the user at the client prompt when he want to send a message to an online
     client
     '''
-    def send_message(self,):
-        raise NotImplementedError
+    def send_message(self, args):
+
+        if len(args) < 2:
+            raise ValueError
+
+        other_client = args[0]
+        content = args[1]
+        self.send_queue.put(Message(self.id,other_client,content))
     
     def send_request_with_resp(self, message: Message):
         self.socket.send(message.serialize().encode())
@@ -107,9 +113,9 @@ class Client:
                 
                 match msg.src:
                     case b'-SERVER-':
-                        print("new message from %s, connected clients are %s",msg.src.decode(), msg.content.decode())
-                    case other:
-                        print("new message from %s and says %s",msg.src.decode(), msg.content.decode())
+                        print("new message from %s, connected clients are %s" %(msg.src.decode(), msg.content.decode()))
+                    case _:
+                        print("new message from %s and says %s" %(msg.src.decode(), msg.content.decode()))
 
     def connection_handler(self):
         logging.info("started connection handler")
@@ -137,7 +143,8 @@ class Client:
                     self.quit()
                 case "@List":
                     self.list()
-                # TODO: handle general message cases
+                case _:
+                    self.send_message(cmd)
 
 
 def select_clientID():
